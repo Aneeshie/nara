@@ -20,8 +20,8 @@
             clippy
             rust-analyzer
 
-            nodejs 
-            pnpm 
+            nodejs
+            pnpm
 
             pkg-config
 
@@ -34,7 +34,6 @@
             openssl
           ];
 
-          # Environment variables to help cargo find libraries
           shellHook = ''
             export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
             echo "🦀 Rust development environment loaded!"
