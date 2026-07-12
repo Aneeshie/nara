@@ -35,6 +35,20 @@ fn write_to_terminal(
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn resize_terminal(
+    id: u32,
+    rows: u16,
+    cols: u16,
+    manager: State<'_, Mutex<TerminalManager>>,
+) -> Result<(), String> {
+    let mut manager = manager.lock().unwrap();
+
+    manager
+        .resize_session(id, rows, cols)
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -44,7 +58,11 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![create_terminal, write_to_terminal])
+        .invoke_handler(tauri::generate_handler![
+            create_terminal,
+            write_to_terminal,
+            resize_terminal
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

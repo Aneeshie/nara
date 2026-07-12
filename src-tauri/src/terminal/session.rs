@@ -1,10 +1,11 @@
-use portable_pty::Child;
+use portable_pty::{Child, MasterPty, PtySize};
 use std::io::Write;
 
 pub struct TerminalSession {
     pub id: u32,
     pub title: String,
     pub child: Box<dyn Child + Send + Sync>,
+    pub master: Box<dyn MasterPty + Send>,
     pub writer: Box<dyn Write + Send>,
 }
 
@@ -14,5 +15,14 @@ impl TerminalSession {
         self.writer.flush()?;
 
         Ok(())
+    }
+
+    pub fn resize(&self, rows: u16, cols: u16) -> anyhow::Result<()> {
+        self.master.resize(PtySize {
+            rows,
+            cols,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
     }
 }

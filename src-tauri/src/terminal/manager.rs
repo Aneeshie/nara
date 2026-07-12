@@ -68,6 +68,7 @@ impl TerminalManager {
             id,
             title,
             child,
+            master: pair.master,
             writer,
         };
 
@@ -85,5 +86,14 @@ impl TerminalManager {
             .ok_or_else(|| anyhow::anyhow!("Session {} not found", id))?;
 
         session.write(command.as_bytes())
+    }
+
+    pub fn resize_session(&mut self, id: u32, rows: u16, cols: u16) -> anyhow::Result<()> {
+        let session = self
+            .sessions
+            .get_mut(&id)
+            .ok_or_else(|| anyhow::anyhow!("Session {} not found", id))?;
+
+        session.resize(rows, cols)
     }
 }
