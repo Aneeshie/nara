@@ -15,13 +15,24 @@ fn create_terminal(
 ) -> Result<u32, String> {
     let mut manager = manager.lock().unwrap();
 
-    let id = manager.create_session(title, app_handle).map_err(|e| e.to_string())?;
-
-    manager
-        .write_to_session(id, "pwd\n".to_string())
+    let id = manager
+        .create_session(title, app_handle)
         .map_err(|e| e.to_string())?;
 
     Ok(id)
+}
+
+#[tauri::command]
+fn write_to_terminal(
+    id: u32,
+    input: String,
+    manager: State<'_, Mutex<TerminalManager>>,
+) -> Result<(), String> {
+    let mut manager = manager.lock().unwrap();
+
+    manager
+        .write_to_session(id, input)
+        .map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -33,7 +44,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![create_terminal])
+        .invoke_handler(tauri::generate_handler![create_terminal, write_to_terminal])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

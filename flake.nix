@@ -13,33 +13,26 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
+          packages = with pkgs; [
             rustc
             cargo
-            rustfmt
-            clippy
             rust-analyzer
+            cargo-tauri
 
             nodejs
             pnpm
 
-            pkg-config
-
-            cargo-tauri
-          ];
-
-          # Libraries required for building many common Rust crates
-          nativeBuildInputs = with pkgs; [
             pkg-config
             openssl
           ];
 
           shellHook = ''
             export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
+
             echo "🦀 Rust development environment loaded!"
             rustc --version
+            cargo --version
           '';
         };
       });
 }
-

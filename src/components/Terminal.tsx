@@ -38,9 +38,17 @@ export default function TerminalView() {
       });
 
       // Spawn the shell
-      await invoke("create_terminal", {
+      const sessionId = await invoke<number>("create_terminal", {
         title: "Terminal 1",
       });
+
+      // write to terminal
+      term.onData((data) => {
+        invoke("write_to_terminal", {
+          id: sessionId,
+          input: data
+        }).catch(console.error)
+      })
     }
 
     init();

@@ -15,6 +15,4 @@ impl TerminalSession {
 
         Ok(())
     }
-
-
 }
