@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { useState } from "react";
 
 function App() {
@@ -15,6 +16,10 @@ function App() {
     })
 
     console.log(id)
+
+    listen<string>("terminal-output", (e) => {
+      console.log(e.payload)
+    })
   }
 
   return (

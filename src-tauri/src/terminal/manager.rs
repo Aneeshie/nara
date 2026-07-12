@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use portable_pty::{native_pty_system, CommandBuilder, PtySize};
-use std::thread::spawn;
-use std::io::Read;
 use crate::terminal::session::TerminalSession;
+use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use std::io::Read;
+use std::thread::spawn;
+use tauri::{AppHandle, Emitter};
 
 pub struct TerminalManager {
     sessions: HashMap<u32, TerminalSession>,
@@ -20,7 +21,7 @@ impl TerminalManager {
     }
 
     //create session
-    pub fn create_session(&mut self, title: String) -> anyhow::Result<u32> {
+    pub fn create_session(&mut self, title: String, app_handle: AppHandle) -> anyhow::Result<u32> {
         let id = self.next_session_id;
 
         let pty_system = native_pty_system();
@@ -45,10 +46,11 @@ impl TerminalManager {
             loop {
                 match reader.read(&mut buf) {
                     Ok(n) => {
-                        println!(
-                            "{}",
-                            String::from_utf8_lossy(&buf[..n])
-                        );
+                        let output = String::from_utf8_lossy(&buf[..n]).to_string();
+
+                        if let Err(e) = app_handle.emit("terminal-output", output) {
+                            eprintln!("Failed to emit terminal output: {}", e);
+                        }
                     }
 
                     Err(e) => {
@@ -58,7 +60,6 @@ impl TerminalManager {
                 }
             }
         });
-
 
         //writer
         let writer = pair.master.take_writer()?;
@@ -77,10 +78,12 @@ impl TerminalManager {
         Ok(id)
     }
 
-    pub fn write_to_session(&mut self, id: u32, command: String) -> anyhow::Result<()>{
-        let session = self.sessions.get_mut(&id).ok_or_else(|| anyhow::anyhow!("Session {} not found", id))?;
+    pub fn write_to_session(&mut self, id: u32, command: String) -> anyhow::Result<()> {
+        let session = self
+            .sessions
+            .get_mut(&id)
+            .ok_or_else(|| anyhow::anyhow!("Session {} not found", id))?;
 
         session.write(command.as_bytes())
     }
-
 }

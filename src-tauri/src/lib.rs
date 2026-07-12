@@ -1,4 +1,4 @@
-use tauri::{Manager, State};
+use tauri::{AppHandle, Manager, State};
 
 use std::sync::Mutex;
 
@@ -10,13 +10,12 @@ pub mod terminal;
 #[tauri::command]
 fn create_terminal(
     title: String,
-    manager: State<'_, Mutex<TerminalManager>>
-) -> Result<u32, String>{
+    app_handle: AppHandle,
+    manager: State<'_, Mutex<TerminalManager>>,
+) -> Result<u32, String> {
     let mut manager = manager.lock().unwrap();
 
-    let id = manager
-        .create_session(title)
-        .map_err(|e| e.to_string())?;
+    let id = manager.create_session(title, app_handle).map_err(|e| e.to_string())?;
 
     manager
         .write_to_session(id, "pwd\n".to_string())
