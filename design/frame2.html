@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Screen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Poppins:wght@100..900&family=Fira+Code:wght@300..700&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+    <style type="text/tailwindcss">
+      @import "tailwindcss";
+      @theme inline {
+        --color-background: var(--background);
+        --color-foreground: var(--foreground);
+        --color-primary: var(--primary);
+        --color-primary-foreground: var(--primary-foreground);
+        --color-secondary: var(--secondary);
+        --color-secondary-foreground: var(--secondary-foreground);
+        --color-tertiary: var(--tertiary);
+        --color-muted: var(--muted);
+        --color-muted-foreground: var(--muted-foreground);
+        --color-accent: var(--accent);
+        --color-destructive: var(--destructive);
+        --color-card: var(--card);
+        --color-card-foreground: var(--card-foreground);
+        --color-border: var(--border);
+        --color-input: var(--input);
+        --color-ring: var(--ring);
+        --radius-sm: calc(var(--radius) - 4px);
+        --radius-md: calc(var(--radius) - 2px);
+        --radius-lg: var(--radius);
+        --font-family-sans: var(--font-sans);
+        --font-family-heading: var(--font-heading);
+        --font-family-mono: var(--font-mono);
+      }
+      :root { --background: #0B0B0B;
+        --foreground: #E5E5E5;
+        --primary: #FFFFFF;
+        --primary-foreground: #0B0B0B;
+        --secondary: #1C1C1C;
+        --secondary-foreground: #E5E5E5;
+        --tertiary: #10B981;
+        --muted: #161616;
+        --muted-foreground: #707070;
+        --accent: #38BDF8;
+        --accent-foreground: #E5E5E5;
+        --card: #121212;
+        --card-foreground: #E5E5E5;
+        --destructive: #EF4444;
+        --border: #1A1A1A;
+        --input: #1F1F1F;
+        --ring: #38BDF8;
+        --radius: 8px;
+        --font-sans: Geist, Inter, sans-serif;
+        --font-heading: Geist, Inter, sans-serif;
+        --font-mono: JetBrains Mono, monospace;
+        --shadow-offset-x: 0;
+        --shadow-offset-y: 10;
+        --shadow-blur: 30;
+        --shadow-spread: -8;
+        --shadow-color: rgba(15, 23, 42, 0.12); }
+    </style>
+    <style>
+      .brand-gradient { background-image: linear-gradient(135deg, var(--primary), var(--accent)); }
+      .shadow-theme {
+        box-shadow:
+          calc(var(--shadow-offset-x, 0) * 1px) calc(var(--shadow-offset-y, 10) * 1px)
+          calc(var(--shadow-blur, 30) * 1px) calc(var(--shadow-spread, -8) * 1px)
+          var(--shadow-color, rgba(15, 23, 42, 0.12));
+      }
+    </style>
+  </head>
+  <body>
+<div class="min-h-screen w-full bg-background flex flex-col relative font-sans text-foreground select-none overflow-hidden">
+
+  <!-- Title Bar (Native macOS Style) -->
+  <header class="h-11 border-b border-border bg-background flex items-center justify-between px-4 shrink-0 opacity-40 pointer-events-none">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-red-500 opacity-80"></span>
+        <span class="w-3 h-3 rounded-full bg-yellow-500 opacity-80"></span>
+        <span class="w-3 h-3 rounded-full bg-green-500 opacity-80"></span>
+      </div>
+      <div class="flex items-center gap-2 ml-4">
+        <span class="text-xs font-semibold tracking-wider text-muted-foreground font-heading">NARA</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-md border border-border/60">
+      <iconify-icon icon="lucide:layers" class="text-xs text-muted-foreground"></iconify-icon>
+      <span class="text-xs text-muted-foreground font-medium">Workspace: <span class="text-foreground">Aneeshie</span></span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1 text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border/80">
+        <span class="font-sans">⌘⇧P</span>
+      </div>
+      <button class="p-1 text-muted-foreground">
+        <iconify-icon icon="lucide:settings" class="text-base"></iconify-icon>
+      </button>
+    </div>
+  </header>
+
+  <!-- Terminal Tabs Bar -->
+  <nav class="h-10 bg-background/80 border-b border-border flex items-center justify-between px-2 shrink-0 opacity-40 pointer-events-none">
+    <div class="flex items-center gap-1 overflow-x-auto scrollbar-none h-full">
+      <div class="relative flex items-center gap-2 px-4 h-8 bg-card border border-border rounded-t-md text-xs text-foreground">
+        <iconify-icon icon="lucide:file-code" class="text-accent text-sm"></iconify-icon>
+        <span class="font-mono font-medium">nvim</span>
+        <span class="absolute bottom-0 left-0 right-0 h-[2px] bg-accent rounded-t"></span>
+      </div>
+      <div class="relative flex items-center gap-2 px-4 h-8 text-xs text-muted-foreground">
+        <iconify-icon icon="lucide:play" class="text-xs"></iconify-icon>
+        <span class="font-mono">cargo run</span>
+      </div>
+      <button class="p-1.5 text-muted-foreground">
+        <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Viewport Area with Command Palette Overlay -->
+  <main class="flex-1 p-3 bg-background flex flex-col min-h-0 relative justify-center items-center">
+
+    <!-- Dimmed Terminal Background Viewport -->
+    <div class="absolute inset-3 rounded-lg border border-border bg-background p-5 font-mono text-sm leading-relaxed opacity-20 pointer-events-none flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between border-b border-border/40 pb-2 mb-4 text-xs">
+          <span class="text-accent flex items-center gap-1.5">~/github/Aneeshie/nara/src/main.rs</span>
+        </div>
+        <div class="space-y-1">
+          <div class="flex"><span class="text-muted-foreground/40 w-8 inline-block text-right pr-3">1</span><span>use std::process::Command;</span></div>
+          <div class="flex"><span class="text-muted-foreground/40 w-8 inline-block text-right pr-3">2</span><span>use tokio::net::TcpListener;</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Command Palette (Raycast-Inspired ⌘⇧P Overlay) -->
+    <div class="w-[560px] bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-30 flex flex-col max-h-[420px] relative">
+      <!-- Search Input -->
+      <div class="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/30">
+        <iconify-icon icon="lucide:search" class="text-muted-foreground text-lg"></iconify-icon>
+        <input type="text" placeholder="Search commands, themes, workspaces..." class="w-full bg-transparent text-foreground placeholder-muted-foreground text-sm focus:outline-none font-sans" autofocus />
+        <span class="text-[10px] text-muted-foreground/80 bg-muted border border-border/80 px-1.5 py-0.5 rounded font-mono">ESC</span>
+      </div>
+
+      <!-- Commands List -->
+      <div class="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+
+        <!-- Category: Terminal -->
+        <div class="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Terminal Actions</div>
+
+        <div class="group flex items-center justify-between px-3 py-2 rounded-lg bg-secondary text-foreground cursor-pointer transition-colors">
+          <div class="flex items-center gap-3">
+            <iconify-icon icon="lucide:plus" class="text-accent text-sm"></iconify-icon>
+            <span class="text-xs font-medium">New Terminal Tab</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[10px] text-muted-foreground font-mono bg-muted/80 px-1.5 py-0.5 rounded border border-border/60">⌘T</span>
+          </div>
+        </div>
+
+        <div class="group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted text-foreground cursor-pointer transition-colors">
+          <div class="flex items-center gap-3">
+            <iconify-icon icon="lucide:columns-2" class="text-muted-foreground text-sm"></iconify-icon>
+            <span class="text-xs font-medium">Split Pane Right</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[10px] text-muted-foreground font-mono bg-muted/80 px-1.5 py-0.5 rounded border border-border/60">⌘D</span>
+          </div>
+        </div>
+
+        <div class="group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted text-foreground cursor-pointer transition-colors">
+          <div class="flex items-center gap-3">
+            <iconify-icon icon="lucide:rows-2" class="text-muted-foreground text-sm"></iconify-icon>
+            <span class="text-xs font-medium">Split Pane Down</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[10px] text-muted-foreground font-mono bg-muted/80 px-1.5 py-0.5 rounded border border-border/60">⌘⇧D</span>
+          </div>
+        </div>
+
+        <!-- Category: Preferences & Workspaces -->
+        <div class="px-3 py-1.5 mt-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Preferences & Configuration</div>
+
+        <div class="group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted text-foreground cursor-pointer transition-colors">
+          <div class="flex items-center gap-3">
+            <iconify-icon icon="lucide:palette" class="text-muted-foreground text-sm"></iconify-icon>
+            <span class="text-xs font-medium">Change Theme...</span>
+          </div>
+          <span class="text-[11px] text-muted-foreground">Dark Obsidian</span>
+        </div>
+
+        <div class="group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted text-foreground cursor-pointer transition-colors">
+          <div class="flex items-center gap-3">
+            <iconify-icon icon="lucide:layers" class="text-muted-foreground text-sm"></iconify-icon>
+            <span class="text-xs font-medium">Switch Workspace...</span>
+          </div>
+          <span class="text-[11px] text-muted-foreground">Aneeshie</span>
+        </div>
+
+        <div class="group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted text-foreground cursor-pointer transition-colors">
+          <div class="flex items-center gap-3">
+            <iconify-icon icon="lucide:settings" class="text-muted-foreground text-sm"></iconify-icon>
+            <span class="text-xs font-medium">Open Settings Editor</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[10px] text-muted-foreground font-mono bg-muted/80 px-1.5 py-0.5 rounded border border-border/60">⌘,</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Palette Footer -->
+      <div class="h-8 bg-muted border-t border-border px-4 flex items-center justify-between text-[11px] text-muted-foreground">
+        <div class="flex items-center gap-1">
+          <span>Use</span>
+          <span class="font-mono bg-card px-1 rounded">↑↓</span>
+          <span>to navigate,</span>
+          <span class="font-mono bg-card px-1 rounded">↵</span>
+          <span>to run</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span>Close with</span>
+          <span class="font-mono bg-card px-1 rounded">⌘⇧P</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Status Bar -->
+  <footer class="h-7 bg-background border-t border-border flex items-center justify-between px-4 shrink-0 text-xs text-muted-foreground font-mono opacity-40 pointer-events-none">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+        <span>zsh</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <span>UTF-8</span>
+      <span class="text-muted-foreground/30">|</span>
+      <span>LF</span>
+      <span class="text-muted-foreground/30">|</span>
+      <span class="text-foreground font-semibold">Ready</span>
+    </div>
+  </footer>
+
+</div>
+</body></html>
