@@ -11,9 +11,10 @@ const WORKING_DIRECTORY = "~/github/Aneeshie/nara";
 
 interface StatusBarProps {
   hasActiveSession: boolean;
+  activeCwd?: string;
 }
 
-export function StatusBar({ hasActiveSession }: StatusBarProps) {
+export function StatusBar({ hasActiveSession, activeCwd }: StatusBarProps) {
   return (
     <footer className="flex h-7 shrink-0 items-center justify-between border-t border-border bg-background px-4 font-mono text-xs text-muted-foreground">
       <div className="flex items-center gap-4">
@@ -32,7 +33,7 @@ export function StatusBar({ hasActiveSession }: StatusBarProps) {
             <span className="text-muted-foreground/30">|</span>
             <div className="flex items-center gap-1.5 transition-colors hover:text-foreground">
               <MapPin className="size-3" />
-              <span>{WORKING_DIRECTORY}</span>
+              <span>{activeCwd ?? WORKING_DIRECTORY}</span>
             </div>
           </>
         ) : null}

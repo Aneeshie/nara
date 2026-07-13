@@ -11,6 +11,12 @@ use std::thread::spawn;
 use tauri::{AppHandle, Emitter};
 
 #[derive(Clone, Serialize)]
+struct TerminalCwdPayload {
+    id: u32,
+    path: String,
+}
+
+#[derive(Clone, Serialize)]
 struct TerminalOutputPayload {
     id: u32,
     data: String,
@@ -77,8 +83,11 @@ impl TerminalManager {
                                     OscEvent::CurrentDirectory(path) => {
                                         println!("Current directory: {}", path);
 
-                                        if let Err(e) = app_handle.emit("cwd-changed", &path) {
-                                            eprintln!("Failed to emit cwd-changed: {}", e);
+                                        if let Err(e) = app_handle.emit(
+                                            "terminal:cwd",
+                                            TerminalCwdPayload { id, path },
+                                        ) {
+                                            eprintln!("Failed to emit cwd: {}", e);
                                         }
                                     }
                                 }
