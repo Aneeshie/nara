@@ -1,11 +1,20 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, f32::consts::E, path::PathBuf};
 
-use crate::terminal::session::TerminalSession;
+use crate::terminal::{
+    osc::{event::OscEvent, parser::OscParser},
+    session::TerminalSession,
+};
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use serde::Serialize;
 use std::io::Read;
 use std::thread::spawn;
 use tauri::{AppHandle, Emitter};
+
+#[derive(Clone, Serialize)]
+struct TerminalCwdPayload {
+    id: u32,
+    path: String,
+}
 
 #[derive(Clone, Serialize)]
 struct TerminalOutputPayload {
@@ -40,7 +49,14 @@ impl TerminalManager {
             pixel_height: 0,
         })?;
 
+        let bashrc = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("scripts")
+            .join("bashrc");
+
         let mut cmd = CommandBuilder::new("bash");
+        cmd.arg("--rcfile");
+        cmd.arg(bashrc.to_string_lossy().to_string());
+        cmd.arg("-i");
         cmd.env("TERM", "xterm-256color");
         cmd.env("COLORTERM", "truecolor");
 
@@ -51,16 +67,47 @@ impl TerminalManager {
 
         spawn(move || {
             let mut buf = vec![0; 4096];
+            let mut parser = OscParser::new();
 
             loop {
                 match reader.read(&mut buf) {
-                    Ok(n) => {
-                        let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                        let payload = TerminalOutputPayload { id, data };
+                    Ok(n) => match parser.feed(&buf[..n]) {
+                        Ok(output) => {
+                            println!("TEXT: {:?}", output.buffer);
+                            println!("EVENTS: {:?}", output.events);
 
-                        if let Err(e) = app_handle.emit("terminal-output", payload) {
-                            eprintln!("Failed to emit terminal output: {}", e);
+                            let data = String::from_utf8_lossy(&output.buffer).to_string();
+
+                            for event in output.events {
+                                match event {
+                                    OscEvent::CurrentDirectory(path) => {
+                                        println!("Current directory: {}", path);
+
+                                        if let Err(e) = app_handle.emit(
+                                            "terminal:cwd",
+                                            TerminalCwdPayload { id, path },
+                                        ) {
+                                            eprintln!("Failed to emit cwd: {}", e);
+                                        }
+                                    }
+                                }
+                            }
+
+                            let payload = TerminalOutputPayload { id, data };
+
+                            if let Err(e) = app_handle.emit("terminal-output", payload) {
+                                eprintln!("Failed to emit terminal output: {}", e);
+                            }
                         }
+
+                        Err(e) => {
+                            eprintln!("Parser error: {}", e);
+                        }
+                    },
+
+                    Ok(0) => {
+                        // PTY closed
+                        break;
                     }
 
                     Err(e) => {

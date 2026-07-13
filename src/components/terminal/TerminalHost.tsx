@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { FitAddon } from "@xterm/addon-fit";
 import type { Terminal } from "@xterm/xterm";
 
@@ -20,7 +20,7 @@ interface TerminalHostProps {
  * mounted at the same time; this component is only ever hidden via CSS, never
  * unmounted, because `terminal.open()` may only be called once.
  */
-export function TerminalHost({ terminal, fitAddon, isActive }: TerminalHostProps) {
+export const TerminalHost = memo(function TerminalHost({ terminal, fitAddon, isActive }: TerminalHostProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const hasOpenedRef = useRef(false);
 
@@ -64,4 +64,4 @@ export function TerminalHost({ terminal, fitAddon, isActive }: TerminalHostProps
   return (
     <div ref={containerRef} className={cn("size-full", isActive ? "block" : "hidden")} />
   );
-}
+});

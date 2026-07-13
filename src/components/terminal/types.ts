@@ -18,6 +18,7 @@ export type TerminalTab = {
    * Report for what backend support would be required.
    */
   hasActivity?: boolean;
+  cwd?: string;
 };
 
 /**

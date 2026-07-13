@@ -24,6 +24,11 @@ interface TerminalOutputEvent {
   data: string;
 }
 
+interface TerminalCwdEvent {
+  id: number;
+  path: string;
+}
+
 export default function App() {
   // Serializable UI state only - safe to re-render on, safe to persist.
   const [tabs, setTabs] = useState<TerminalTab[]>([]);
@@ -100,6 +105,25 @@ export default function App() {
     };
   }, []);
 
+  // Listen for terminal current working directory updates.
+  useEffect(() => {
+    const unlistenPromise = listen<TerminalCwdEvent>("terminal:cwd", (event) => {
+      const { id, path } = event.payload;
+      setTabs((prev) =>
+        prev.map((tab) => {
+          if (tab.id === id) {
+            return { ...tab, cwd: path };
+          }
+          return tab;
+        })
+      );
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
+
   // Global, keyboard-first shortcuts: ⌘T new tab, ⌘W close active tab,
   // ⌘⇧P command palette, ⌘, settings. All dispatch to the same real
   // callbacks used by clicking the equivalent UI elements.
@@ -149,6 +173,8 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const activeTab = tabs.find((tab) => tab.id === activeTabId);
+
   return (
     <TooltipProvider>
       <div className="flex h-screen w-screen flex-col overflow-hidden bg-background">
@@ -167,7 +193,7 @@ export default function App() {
           onRenameTab={renameTab}
         />
 
-        <StatusBar hasActiveSession={tabs.length > 0} />
+        <StatusBar hasActiveSession={tabs.length > 0} activeCwd={activeTab?.cwd} />
       </div>
 
       <CommandPalette
