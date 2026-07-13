@@ -47,6 +47,7 @@ impl TerminalManager {
         let mut cmd = CommandBuilder::new("bash");
         cmd.arg("--rcfile");
         cmd.arg(bashrc.to_string_lossy().to_string());
+        cmd.arg("-i");
         cmd.env("TERM", "xterm-256color");
         cmd.env("COLORTERM", "truecolor");
 
