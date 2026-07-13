@@ -1,9 +1,12 @@
-echo "=== NARA RCFILE LOADED ==="
-echo "FLAGS: $-"
-echo "PWD: $PWD"
-
-printf '\033]7;file://%s\007' "$PWD"
-
+__nara_prompt() {
+    printf '\033]7;file://%s\007' "$PWD"
+}
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
+fi
+
+if [ -n "$PROMPT_COMMAND" ]; then
+    PROMPT_COMMAND="__nara_prompt;$PROMPT_COMMAND"
+else
+    PROMPT_COMMAND="__nara_prompt"
 fi
