@@ -2,9 +2,16 @@ use std::collections::HashMap;
 
 use crate::terminal::session::TerminalSession;
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use serde::Serialize;
 use std::io::Read;
 use std::thread::spawn;
 use tauri::{AppHandle, Emitter};
+
+#[derive(Clone, Serialize)]
+struct TerminalOutputPayload {
+    id: u32,
+    data: String,
+}
 
 pub struct TerminalManager {
     sessions: HashMap<u32, TerminalSession>,
@@ -46,9 +53,10 @@ impl TerminalManager {
             loop {
                 match reader.read(&mut buf) {
                     Ok(n) => {
-                        let output = String::from_utf8_lossy(&buf[..n]).to_string();
+                        let data = String::from_utf8_lossy(&buf[..n]).to_string();
+                        let payload = TerminalOutputPayload { id, data };
 
-                        if let Err(e) = app_handle.emit("terminal-output", output) {
+                        if let Err(e) = app_handle.emit("terminal-output", payload) {
                             eprintln!("Failed to emit terminal output: {}", e);
                         }
                     }
@@ -95,5 +103,18 @@ impl TerminalManager {
             .ok_or_else(|| anyhow::anyhow!("Session {} not found", id))?;
 
         session.resize(rows, cols)
+    }
+
+    pub fn kill_session(&mut self, id: u32) -> anyhow::Result<()> {
+        let session = self
+            .sessions
+            .get_mut(&id)
+            .ok_or_else(|| anyhow::anyhow!("Session {} not found", id))?;
+
+        session.kill()?;
+
+        self.sessions.remove(&id);
+
+        Ok(())
     }
 }

@@ -49,6 +49,13 @@ fn resize_terminal(
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn kill_terminal(id: u32, manager: State<'_, Mutex<TerminalManager>>) -> Result<(), String> {
+    let mut manager = manager.lock().unwrap();
+
+    manager.kill_session(id).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -61,7 +68,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             create_terminal,
             write_to_terminal,
-            resize_terminal
+            resize_terminal,
+            kill_terminal
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

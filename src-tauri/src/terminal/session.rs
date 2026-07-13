@@ -25,4 +25,9 @@ impl TerminalSession {
             pixel_height: 0,
         })
     }
+
+    pub fn kill(&mut self) -> anyhow::Result<()> {
+        self.child.kill();
+        Ok(())
+    }
 }
