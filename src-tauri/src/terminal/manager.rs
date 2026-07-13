@@ -1,6 +1,9 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::terminal::session::TerminalSession;
+use crate::terminal::{
+    osc::{event::OscEvent, parser::OscParser},
+    session::TerminalSession,
+};
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use serde::Serialize;
 use std::io::Read;
@@ -58,16 +61,45 @@ impl TerminalManager {
 
         spawn(move || {
             let mut buf = vec![0; 4096];
+            let mut parser = OscParser::new();
 
             loop {
                 match reader.read(&mut buf) {
                     Ok(n) => {
-                        let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                        let payload = TerminalOutputPayload { id, data };
+                        match parser.feed(&buf[..n]) {
+                            Ok(output) => {
+                                println!("TEXT: {:?}", output.buffer);
+                                println!("EVENTS: {:?}", output.events);
 
-                        if let Err(e) = app_handle.emit("terminal-output", payload) {
-                            eprintln!("Failed to emit terminal output: {}", e);
+                                let data = String::from_utf8_lossy(&output.buffer).to_string();
+
+                                for event in output.events {
+                                    match event {
+                                        OscEvent::CurrentDirectory(path) => {
+                                            println!("Current directory: {}", path);
+
+                                            // Later:
+                                            // app_handle.emit("cwd-changed", path).ok();
+                                        }
+                                    }
+                                }
+
+                                let payload = TerminalOutputPayload { id, data };
+
+                                if let Err(e) = app_handle.emit("terminal-output", payload) {
+                                    eprintln!("Failed to emit terminal output: {}", e);
+                                }
+                            }
+
+                            Err(e) => {
+                                eprintln!("Parser error: {}", e);
+                            }
                         }
+                    }
+
+                    Ok(0) => {
+                        // PTY closed
+                        break;
                     }
 
                     Err(e) => {
