@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { Toaster } from "#components/ui/sonner";
+import { toast } from "sonner";
 import "@xterm/xterm/css/xterm.css";
 
 import { Titlebar } from "#components/titlebar/Titlebar";
 import { TerminalLayout } from "#components/terminal/TerminalLayout";
 import { createTerminalInstance } from "./components/terminal/createTerminalInstance";
 import type { TerminalInstance, TerminalTab } from "./components/terminal/types";
+import { StatusBar } from "#components/statusbar/StatusBar";
+import { CommandPalette } from "#components/command-palette/CommandPalette";
+import { SettingsSheet } from "#components/settings/SettingsSheet";
 import { TooltipProvider } from "#components/ui/tooltip";
 
 /**
@@ -23,6 +28,8 @@ export default function App() {
   // Serializable UI state only - safe to re-render on, safe to persist.
   const [tabs, setTabs] = useState<TerminalTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Imperative, non-serializable handles. Never read during render logic
   // that needs to re-run on change - only looked up by id when mounting a
@@ -37,16 +44,24 @@ export default function App() {
     tabCounterRef.current += 1;
     const title = `Terminal ${tabCounterRef.current}`;
 
-    const id = await invoke<number>("create_terminal", { title });
+    try {
+      const id = await invoke<number>("create_terminal", { title });
 
-    terminalsRef.current.set(id, createTerminalInstance(id));
+      terminalsRef.current.set(id, createTerminalInstance(id));
 
-    setTabs((prev) => [...prev, { id, title }]);
-    setActiveTabId(id);
+      setTabs((prev) => [...prev, { id, title }]);
+      setActiveTabId(id);
+    } catch (error) {
+      console.error(error);
+      toast.error("Couldn't create a new terminal", { description: String(error) });
+    }
   }, []);
 
   const closeTab = useCallback((id: number) => {
-    invoke("kill_terminal", { id }).catch(console.error);
+    invoke("kill_terminal", { id }).catch((error) => {
+      console.error(error);
+      toast.error("Couldn't close the terminal cleanly", { description: String(error) });
+    });
 
     terminalsRef.current.get(id)?.terminal.dispose();
     terminalsRef.current.delete(id);
@@ -65,6 +80,12 @@ export default function App() {
     });
   }, []);
 
+  // Renaming is purely cosmetic frontend state - the title is never sent to
+  // the backend, so this needs no invoke() call at all.
+  const renameTab = useCallback((id: number, title: string) => {
+    setTabs((prev) => prev.map((tab) => (tab.id === id ? { ...tab, title } : tab)));
+  }, []);
+
   // Route backend output to the right terminal instance. Registered once,
   // for the lifetime of the app - not per tab - so opening/closing tabs
   // never adds or drops listeners.
@@ -78,6 +99,44 @@ export default function App() {
       unlistenPromise.then((unlisten) => unlisten());
     };
   }, []);
+
+  // Global, keyboard-first shortcuts: ⌘T new tab, ⌘W close active tab,
+  // ⌘⇧P command palette, ⌘, settings. All dispatch to the same real
+  // callbacks used by clicking the equivalent UI elements.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!event.metaKey && !event.ctrlKey) return;
+
+      if (event.key.toLowerCase() === "t" && !event.shiftKey) {
+        event.preventDefault();
+        createTab();
+        return;
+      }
+
+      if (event.key.toLowerCase() === "w") {
+        event.preventDefault();
+        setActiveTabId((current) => {
+          if (current !== null) closeTab(current);
+          return current;
+        });
+        return;
+      }
+
+      if (event.key.toLowerCase() === "p" && event.shiftKey) {
+        event.preventDefault();
+        setIsCommandPaletteOpen((open) => !open);
+        return;
+      }
+
+      if (event.key === ",") {
+        event.preventDefault();
+        setIsSettingsOpen(true);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [createTab, closeTab]);
 
   // Start with a single terminal, and dispose everything on unmount.
   useEffect(() => {
@@ -93,7 +152,11 @@ export default function App() {
   return (
     <TooltipProvider>
       <div className="flex h-screen w-screen flex-col overflow-hidden bg-background">
-        <Titlebar />
+        <Titlebar
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+
         <TerminalLayout
           tabs={tabs}
           activeTabId={activeTabId}
@@ -101,8 +164,22 @@ export default function App() {
           onSelectTab={setActiveTabId}
           onCloseTab={closeTab}
           onCreateTab={createTab}
+          onRenameTab={renameTab}
         />
+
+        <StatusBar hasActiveSession={tabs.length > 0} />
       </div>
+
+      <CommandPalette
+        open={isCommandPaletteOpen}
+        onOpenChange={setIsCommandPaletteOpen}
+        onCreateTab={createTab}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
+      <SettingsSheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+
+      <Toaster theme="dark" position="bottom-right" />
     </TooltipProvider>
   );
 }

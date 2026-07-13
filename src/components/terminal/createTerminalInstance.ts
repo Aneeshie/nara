@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
+import { toast } from "sonner";
 
 import type { TerminalInstance } from "./types";
 
@@ -23,11 +24,11 @@ export function createTerminalInstance(id: number): TerminalInstance {
     fontSize: 14,
     fontFamily: "JetBrains Mono, Menlo, monospace",
     theme: {
-      background: "#121212",
+      background: "#0b0b0b",
       foreground: "#e5e5e5",
-      cursor: "#6e7bff",
-      cursorAccent: "#121212",
-      selectionBackground: "rgba(110, 123, 255, 0.25)",
+      cursor: "#38bdf8",
+      cursorAccent: "#0b0b0b",
+      selectionBackground: "rgba(56, 189, 248, 0.25)",
     },
   });
 
@@ -35,11 +36,17 @@ export function createTerminalInstance(id: number): TerminalInstance {
   terminal.loadAddon(fitAddon);
 
   terminal.onData((data) => {
-    invoke("write_to_terminal", { id, input: data }).catch(console.error);
+    invoke("write_to_terminal", { id, input: data }).catch((error) => {
+      console.error(error);
+      toast.error("Couldn't send input to the terminal", { description: String(error) });
+    });
   });
 
   terminal.onResize(({ rows, cols }) => {
-    invoke("resize_terminal", { id, rows, cols }).catch(console.error);
+    invoke("resize_terminal", { id, rows, cols }).catch((error) => {
+      console.error(error);
+      toast.error("Couldn't resize the terminal", { description: String(error) });
+    });
   });
 
   return { terminal, fitAddon };
