@@ -1,66 +1,149 @@
-import { X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Columns2, Copy, Pencil, Plus, Rows2, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "#components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "#components/ui/context-menu";
 import { cn } from "#lib/utils";
 
+import { getTabIcon } from "./tabIcon";
 import type { TerminalTab as TerminalTabData } from "./types";
 
 interface TerminalTabProps {
   tab: TerminalTabData;
   isActive: boolean;
-  index: number;
   onSelect: (id: number) => void;
   onClose: (id: number) => void;
+  onCreateTab: () => void;
+  onRenameTab: (id: number, title: string) => void;
 }
 
-export function TerminalTab({ tab, isActive, index, onSelect, onClose }: TerminalTabProps) {
+export function TerminalTab({
+  tab,
+  isActive,
+  onSelect,
+  onClose,
+  onCreateTab,
+  onRenameTab,
+}: TerminalTabProps) {
+  // Rename is ephemeral, per-tab editing UI state - not application state.
+  // The committed value flows out through `onRenameTab`, which is where the
+  // real (serializable) title lives, in App.tsx.
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(tab.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const Icon = getTabIcon(tab.title);
+
+  const startRenaming = () => {
+    setDraftTitle(tab.title);
+    setIsRenaming(true);
+    requestAnimationFrame(() => inputRef.current?.select());
+  };
+
+  const commitRename = () => {
+    const nextTitle = draftTitle.trim();
+    if (nextTitle && nextTitle !== tab.title) onRenameTab(tab.id, nextTitle);
+    setIsRenaming(false);
+  };
+
+  const notImplemented = (feature: string) => {
+    toast.info(`${feature} isn't available yet`, {
+      description: "This needs a multi-pane layout in the backend session model.",
+    });
+  };
+
   return (
-    <div
-      role="tab"
-      aria-selected={isActive}
-      onClick={() => onSelect(tab.id)}
-      className={cn(
-        "group relative flex h-8 shrink-0 cursor-default items-center gap-2 rounded-lg px-2.5 text-xs transition-colors duration-150 select-none",
-        isActive
-          ? "bg-muted text-foreground"
-          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground/80"
-      )}
-    >
-      <span
-        className={cn(
-          "size-1.5 shrink-0 rounded-full transition-colors duration-150",
-          isActive ? "bg-success shadow-[0_0_6px_-1px_var(--success)]" : "bg-muted-foreground/40"
-        )}
-      />
-
-      <span className="max-w-32 truncate font-medium">{tab.title}</span>
-
-      <div className="relative ml-0.5 flex size-4 shrink-0 items-center justify-center">
-        <span
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <div
+          role="tab"
+          aria-selected={isActive}
+          onClick={() => onSelect(tab.id)}
+          onDoubleClick={startRenaming}
           className={cn(
-            "font-mono text-[10px] text-muted-foreground/60 transition-opacity duration-100",
-            "group-hover:opacity-0"
+            "group relative flex h-8 shrink-0 cursor-default items-center gap-2 rounded-t-md px-4 text-xs transition-all duration-150 select-none",
+            isActive
+              ? "border border-border bg-card text-foreground"
+              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
           )}
         >
-          {index}
-        </span>
+          <Icon className={cn("size-3.5 shrink-0", isActive && "text-brand")} />
 
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          className="absolute inset-0 size-4 rounded-md opacity-0 transition-opacity duration-100 group-hover:opacity-100"
-          onClick={(event) => {
-            event.stopPropagation();
-            onClose(tab.id);
-          }}
-        >
-          <X className="size-3" />
-        </Button>
-      </div>
+          {isRenaming ? (
+            <input
+              ref={inputRef}
+              value={draftTitle}
+              onChange={(event) => setDraftTitle(event.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") commitRename();
+                if (event.key === "Escape") setIsRenaming(false);
+              }}
+              onClick={(event) => event.stopPropagation()}
+              autoFocus
+              className="w-24 bg-transparent font-mono outline-none"
+            />
+          ) : (
+            <span className={cn("font-mono", isActive && "font-medium")}>{tab.title}</span>
+          )}
 
-      {isActive ? (
-        <span className="absolute inset-x-2.5 -bottom-1.25 h-0.5 rounded-full bg-brand" />
-      ) : null}
-    </div>
+          {tab.hasActivity ? (
+            <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-tertiary" title="Background activity" />
+          ) : null}
+
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            className={cn(
+              "ml-1 size-4 shrink-0 rounded-sm text-muted-foreground opacity-0 transition-all duration-150 group-hover:opacity-100",
+              isRenaming && "pointer-events-none opacity-0"
+            )}
+            title="Close Tab"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClose(tab.id);
+            }}
+          >
+            <X className="size-2.5" />
+          </Button>
+
+          {isActive ? <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-t bg-brand" /> : null}
+        </div>
+      </ContextMenuTrigger>
+
+      <ContextMenuContent className="w-52">
+        <ContextMenuItem onClick={onCreateTab}>
+          <Plus className="text-muted-foreground" /> New Terminal
+          <ContextMenuShortcut>⌘T</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={startRenaming}>
+          <Pencil className="text-muted-foreground" /> Rename Tab
+          <ContextMenuShortcut>⌘R</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={onCreateTab}>
+          <Copy className="text-muted-foreground" /> Duplicate Tab
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={() => notImplemented("Split Right")}>
+          <Columns2 className="text-muted-foreground" /> Split Right
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => notImplemented("Split Down")}>
+          <Rows2 className="text-muted-foreground" /> Split Down
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem variant="destructive" onClick={() => onClose(tab.id)}>
+          <Trash2 /> Close Tab
+          <ContextMenuShortcut className="text-destructive/80">⌘W</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
