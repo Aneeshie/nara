@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::terminal::session::TerminalSession;
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
@@ -40,7 +40,13 @@ impl TerminalManager {
             pixel_height: 0,
         })?;
 
+        let bashrc = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("scripts")
+            .join("bashrc");
+
         let mut cmd = CommandBuilder::new("bash");
+        cmd.arg("--rcfile");
+        cmd.arg(bashrc.to_string_lossy().to_string());
         cmd.env("TERM", "xterm-256color");
         cmd.env("COLORTERM", "truecolor");
 
