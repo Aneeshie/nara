@@ -40,7 +40,9 @@ impl TerminalManager {
             pixel_height: 0,
         })?;
 
-        let cmd = CommandBuilder::new("bash");
+        let mut cmd = CommandBuilder::new("bash");
+        cmd.env("TERM", "xterm-256color");
+        cmd.env("COLORTERM", "truecolor");
 
         let child = pair.slave.spawn_command(cmd)?;
 
